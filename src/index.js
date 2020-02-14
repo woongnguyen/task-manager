@@ -21,7 +21,7 @@ const myfunc = async () => {
   const hashPass = await bcrypt.hash(pass, 8)
   console.log(pass)
   console.log(hashPass)
-  const isMath = await bcrypt.compare('Quan1234!', hashPass)
+  const isMath = await bcrypt.compare('Quan1234@', hashPass)
   console.log(isMath)
 }
 
