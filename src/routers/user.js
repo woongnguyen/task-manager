@@ -1,5 +1,6 @@
 const express = require('express')
 const User = require('../models/user')
+const auth = require('../middleware/auth')
 const router = new express.Router()
 
 router.post('/users', async (req, res) => {
@@ -7,20 +8,52 @@ router.post('/users', async (req, res) => {
   console.log(req.body)
   try {
     await addUser.save()
-    res.status(201).send(addUser)
+    const token = await addUser.generateAuthToken()
+    res.status(201).send({addUser, token})
   } catch (e) {
     res.status(400).send(e)
   }
 })
 
-router.get('/users', async (req, res) =>{
-
+router.post('/users/login', async (req, res) => {
   try {
-    const users = await User.find({})
-    res.send(users)
+    const user = await User.findByCredentials(req.body.email, req.body.password)
+    const token = await user.generateAuthToken()
+    res.send({user, token})
+
+  } catch (e) {
+    return res.status(400).send(e)
+  }
+
+})
+
+router.post('/users/logout',auth,  async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter((token) => {
+      return token.token !== req.token
+    })
+    await req.user.save()
+    res.send()
   } catch (e) {
     res.status(500).send()
   }
+})
+
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    req.user.tokens = []
+    console.log(req.user.tokens)
+    await req.user.save()
+    res.send()
+  } catch (e) {
+    res.status(500).send()
+  }
+})
+
+router.get('/users/me', auth, async (req, res) => {
+  
+  res.send(req.user)
 })
 
 router.get('/users/:id', async (req, res) =>{
@@ -48,13 +81,15 @@ router.patch('/users/:id', async (req, res) => {
     return res.status(400).send({error:'Invalid updates!'})
   }
   try{
+    const user = await User.findById(req.params.id)
 
-    const updateUser = await User.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators:true})
+    updates.forEach((update) => user[update] = req.body[update])
+    await user.save()
 
-    if(!updateUser){
+    if(!user){
       return res.status(404).send()
     }
-    res.send(updateUser)
+    res.send(user)
   } catch(e){
     res.status(400).send(e)
   }

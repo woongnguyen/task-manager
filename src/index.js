@@ -14,15 +14,3 @@ app.listen(port, () =>{
   console.log('Server is up on port ' + port)
 })
 
-const bcrypt = require('bcryptjs')
-
-const myfunc = async () => {
-  const pass = 'Quan1234@'
-  const hashPass = await bcrypt.hash(pass, 8)
-  console.log(pass)
-  console.log(hashPass)
-  const isMath = await bcrypt.compare('Quan1234@', hashPass)
-  console.log(isMath)
-}
-
-myfunc()
